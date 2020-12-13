@@ -16,7 +16,7 @@ class DBHelper{
   Future initDatabase() async {
     var documentsDirectory = await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, dbPath);
-    print("dasdasdsada $path");
+
     _database = await openDatabase(path, version: 1, onOpen: (db) {},
         onCreate: (Database db, int version) async {
       await db.execute("create table $tableName (id INTEGER PRIMARY KEY, "
