@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mgr_flutter/database/db_helper.dart';
 import 'package:mgr_flutter/fetch_data/api_client.dart';
 import 'package:mgr_flutter/fetch_data/task_entry_model.dart';
 import 'package:mgr_flutter/file_utils/file_utils.dart';
+
+import 'database/person_model.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -21,6 +24,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool databaseExamination  = false;
 
   List<TaskEntry> apiData = new List();
+  List<Person> databaseData = new List();
   String fileData = "";
 
   Stopwatch stopwatch = new Stopwatch();
@@ -56,6 +60,30 @@ class _MyHomePageState extends State<MyHomePage> {
       fileExamination = true;
       time = stopwatch.elapsedMilliseconds;
     });
+  }
+
+  void database(){
+    stopwatch.reset();
+    stopwatch.start();
+    DBHelper dbHelper = new DBHelper("db${DateFormat("yyyy-MM-dd HH:mm:ss").format(DateTime.now().toLocal())}.sqlite");
+    dbHelper.initDatabase().then((value){
+      dbHelper.queryAllRows().then((content) {
+        setState(() {
+          databaseData.addAll(content);
+        });
+      });
+    });
+    setState(() {
+      stopwatch.stop();
+      databaseExamination = true;
+      time = stopwatch.elapsedMilliseconds;
+    });
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
@@ -98,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 Expanded(
                   child: RaisedButton(
-                    onPressed: (){},
+                    onPressed: ()=>database(),
                     child: Text("Stwórz i pobierz dane z lokalnej bazy danych"),
                   ),
                 ),
@@ -121,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   });
                 },
                 child: Text("RESET")),
-          if (fetchDataExamination)
+          fetchDataExamination ?
             Expanded(
               child: ListView(
                 children: apiData.map((x) {
@@ -131,9 +159,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
                 }).toList(),
               ),
-            ),
-          if (fileExamination)
-            Expanded(child: Text(fileData))
+            ) : Container(),
+          fileExamination ?
+            Expanded(child: Text(fileData)) : Container(),
+          databaseExamination ?
+            Expanded(
+              child: ListView(
+                children: databaseData.map((x) {
+                  return ListTile(
+                    title: Text("Id: ${x.id}, ${x.name} ${x.surname}, Age: ${x.age}"),
+                  );
+                }).toList(),
+              ),
+            ) : Container(),
         ],
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
